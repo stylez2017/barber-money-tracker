@@ -31,3 +31,7 @@ npm start
 - No authentication, backend, subscription billing, or Stripe integration is included. The planned future subscription price is $5/month.
 
 No environment variables, external database, API keys, or external fonts are required.
+
+## Cloudflare Workers
+
+OpenNext Cloudflare deployment configuration is included. See [CLOUDFLARE.md](./CLOUDFLARE.md) for build, local Worker preview, GitHub integration, and manual deployment instructions. Preparing this repository does not deploy it.

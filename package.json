@@ -7,21 +7,30 @@
     "build": "next build --webpack",
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types tests/finance.test.ts"
+    "test": "node --experimental-strip-types tests/finance.test.ts",
+    "build:cloudflare": "opennextjs-cloudflare build",
+    "preview:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare preview",
+    "deploy:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare deploy",
+    "check:cloudflare": "wrangler deploy --dry-run --outdir .open-next/dry-run"
   },
   "dependencies": {
-    "next": "^16.0.0",
+    "lucide-react": "^0.468.0",
+    "next": "^16.4.3",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "lucide-react": "^0.468.0"
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "tailwindcss": "^4.1.0",
+    "@opennextjs/cloudflare": "^1.20.15",
     "@tailwindcss/postcss": "^4.1.0",
-    "typescript": "^5.9.0",
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0"
+    "@types/react-dom": "^19.2.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.0",
+    "wrangler": "^4.156.0"
   },
-  "type": "module"
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  }
 }
