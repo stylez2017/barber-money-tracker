@@ -11,7 +11,8 @@
     "build:cloudflare": "opennextjs-cloudflare build",
     "preview:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare preview",
     "deploy:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare deploy",
-    "check:cloudflare": "wrangler deploy --dry-run --outdir .open-next/dry-run"
+    "check:cloudflare": "wrangler deploy --dry-run --outdir .open-next/dry-run",
+    "test:tooling": "node tests/build-tooling.test.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
@@ -32,5 +33,13 @@
   "type": "module",
   "engines": {
     "node": ">=22.0.0"
+  },
+  "overrides": {
+    "@opennextjs/cloudflare": {
+      "glob": "14.0.3"
+    },
+    "@node-minify/core": {
+      "glob": "14.0.3"
+    }
   }
 }
