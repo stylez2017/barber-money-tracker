@@ -3,8 +3,12 @@
   "name": "barber-money-tracker",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-10-30",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-  "workers_dev": true,
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+  "workers_dev": false,
+  "preview_urls": false,
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
@@ -14,5 +18,23 @@
       "binding": "WORKER_SELF_REFERENCE",
       "service": "barber-money-tracker"
     }
-  ]
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "barber-money-tracker-db",
+      "database_id": "9b51209f-8131-4368-8688-998a223b4bbd",
+      "preview_database_id": "619d4116-48f6-47a0-b063-b1686be45c3f"
+    }
+  ],
+  "previews": {
+    "d1_databases": [
+      {
+        "binding": "DB",
+        "database_name": "barber-money-tracker-test-db",
+        "database_id": "619d4116-48f6-47a0-b063-b1686be45c3f"
+      }
+    ]
+  },
+  "keep_vars": true
 }

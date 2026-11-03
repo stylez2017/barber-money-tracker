@@ -1,4 +1,4 @@
 import { defineCloudflareConfig } from '@opennextjs/cloudflare';
 
-// The current app uses browser storage and static pages, with no ISR or server cache.
+// Authenticated routes use uncached server responses; no ISR cache is configured.
 export default defineCloudflareConfig({});
