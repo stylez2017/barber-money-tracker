@@ -33,8 +33,16 @@
         "binding": "DB",
         "database_name": "barber-money-tracker-test-db",
         "database_id": "619d4116-48f6-47a0-b063-b1686be45c3f"
+      },
+      {
+        "binding": "PRIVATE_TEST_DB",
+        "database_name": "barber-money-tracker-test-db",
+        "database_id": "619d4116-48f6-47a0-b063-b1686be45c3f"
       }
-    ]
+    ],
+    "vars": {
+      "APP_ACCESS_MODE": "private-test"
+    }
   },
   "keep_vars": true
 }

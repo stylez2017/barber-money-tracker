@@ -9,6 +9,7 @@ import { resolve, join } from 'node:path';
 import { createServer } from 'node:net';
 import { once } from 'node:events';
 
+const privateMode = process.argv.includes('--private');
 const root = resolve(import.meta.dirname, '..');
 const scratch = mkdtempSync(join(tmpdir(), 'barber-worker-test-'));
 const cli = join(root, 'node_modules/wrangler/bin/wrangler.js');
@@ -24,8 +25,8 @@ const wrapper = join(scratch, 'worker-test-entry.mjs');
 writeFileSync(wrapper, `import app from ${JSON.stringify(entry)};
 import { installFixture, fixtureControl } from ${JSON.stringify(join(root, 'scripts/stripe-worker-fixture.mjs'))};
 export * from ${JSON.stringify(entry)};
-installFixture();
-export default { fetch(request, env, ctx) { return fixtureControl(request) ?? app.fetch(request, env, ctx); } };
+${privateMode ? '' : 'installFixture();'}
+export default { fetch(request, env, ctx) { return ${privateMode ? '' : 'fixtureControl(request) ?? '}app.fetch(request, env, ctx); } };
 `);
 config.main = wrapper;
 config.assets.directory = join(root, '.open-next/assets');
@@ -40,6 +41,13 @@ config.vars = {
   STRIPE_PRICE_ID: 'price_monthly',
   APP_ORIGIN: origin,
 };
+if (privateMode) {
+  config.d1_databases[0] = config.previews.d1_databases[0];
+  config.d1_databases.push({binding:'PRIVATE_TEST_DB',database_name:'barber-money-tracker-test-db',database_id:'619d4116-48f6-47a0-b063-b1686be45c3f'});
+  config.vars.APP_ACCESS_MODE = 'private-test';
+  config.vars.PRIVATE_TEST_USER_IDS = 'user_A,user_B';
+  for (const key of ['STRIPE_SECRET_KEY','STRIPE_WEBHOOK_SECRET','STRIPE_PRICE_ID']) delete config.vars[key];
+}
 const configPath = join(scratch, 'wrangler.json');
 writeFileSync(configPath, JSON.stringify(config));
 const env = { ...process.env, WRANGLER_SEND_METRICS: 'false', XDG_CONFIG_HOME: join(scratch, 'config'), WRANGLER_REGISTRY_PATH: join(scratch, 'registry'), WRANGLER_LOG_PATH: join(scratch, 'wrangler.log') };
@@ -57,14 +65,16 @@ async function call(owner, body, jwt) {
     ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(15_000) });
 }
 try {
-  for (const migration of ['0001_transactions.sql','0002_billing.sql']) {
-    execFileSync(process.execPath, [cli, 'd1', 'execute', 'DB', '--local', '--config', configPath,
+  for (const migration of (privateMode ? ['0001_transactions.sql','0003_savings.sql'] : ['0001_transactions.sql','0002_billing.sql','0003_savings.sql'])) {
+    execFileSync(process.execPath, [cli, 'd1', 'execute', privateMode ? 'PRIVATE_TEST_DB' : 'DB', '--local', '--config', configPath,
       '--file', join(root, 'migrations', migration), '--persist-to', join(scratch, 'state')], { cwd: root, env, stdio: 'pipe' });
   }
+  if (!privateMode) {
   const seed = join(scratch, 'seed.sql');
   writeFileSync(seed, "INSERT INTO billing_accounts(user_id,billing_key,checkout_key,stripe_customer_id) VALUES ('user_A','key_A','checkout_A','cus_user_A'),('user_B','key_B','checkout_B','cus_user_B');");
-  execFileSync(process.execPath, [cli, 'd1', 'execute', 'DB', '--local', '--config', configPath,
+  execFileSync(process.execPath, [cli, 'd1', 'execute', privateMode ? 'PRIVATE_TEST_DB' : 'DB', '--local', '--config', configPath,
     '--file', seed, '--persist-to', join(scratch, 'state')], { cwd: root, env, stdio: 'pipe' });
+  }
   worker = spawn(process.execPath, [cli, 'dev', '--local', '--config', configPath, '--port', String(port),
     '--ip', '127.0.0.1', '--persist-to', join(scratch, 'state')], { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'] });
   for (const stream of [worker.stdout, worker.stderr]) stream.on('data', chunk => { logs = (logs + chunk).slice(-12_000); });
@@ -90,6 +100,19 @@ try {
   assert.equal(aResponse.headers.get('cache-control'), 'no-store');
   assert.deepEqual((await aResponse.json()).rows, [row]);
   assert.deepEqual((await (await call('user_B')).json()).rows, []);
+  if (privateMode) {
+    assert.equal((await call('user_C')).status,403);
+    const status = await fetch(`${origin}/api/billing/status`,{headers:{Authorization:`Bearer ${token('user_A')}`}});
+    assert.equal((await status.json()).privateTesting,true);
+    const plan = {goal:100000,saved:12345,percent:25};
+    const savings = await fetch(`${origin}/api/savings`,{method:'POST',headers:{Authorization:`Bearer ${token('user_A')}`,'Content-Type':'application/json'},body:JSON.stringify(plan)});
+    assert.equal(savings.status,200,await savings.clone().text());
+    const loaded=await fetch(`${origin}/api/savings`,{headers:{Authorization:`Bearer ${token('user_A')}`}});
+    assert.deepEqual(await loaded.json(),plan);
+    const denied=await fetch(`${origin}/api/billing/checkout`,{method:'POST',headers:{Authorization:`Bearer ${token('user_A')}`,'Content-Type':'application/json'},body:'{}'});
+    assert.equal(denied.status,403);
+    console.log('PASS: private local workerd, Clerk sessions, isolated D1 CRUD and savings persistence with NO Stripe configuration.');
+  } else {
   assert.equal((await call('user_C')).status, 402, 'Unpaid customer cannot read records');
   assert.equal((await call('user_C', { operation: 'save', transaction: row })).status, 402, 'Unpaid customer cannot write records');
   const billingCall = (action, body) => fetch(`${origin}/api/billing/${action}`, { method: body ? 'POST' : 'GET', headers: { Authorization: `Bearer ${token('user_C')}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
@@ -112,6 +135,7 @@ try {
   assert.equal((await call('user_A')).status, 402, 'Payment failure revokes record access');
   assert.equal((await call('user_B')).status, 200, 'Other paid customers keep access');
   console.log('PASS: local workerd verified sessions, D1 isolation, Stripe SDK checkout, payment restrictions and signed webhook retries using local-only Stripe fixtures.');
+  }
 } catch (error) {
   console.error(logs.replace(/sk_test_[A-Za-z0-9_]+/g, '[THROWAWAY TEST KEY]'));
   throw error;

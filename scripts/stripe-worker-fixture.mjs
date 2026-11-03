@@ -1,6 +1,6 @@
 // Imported ONLY by the temporary local integration-test wrapper, never by app code.
 const app = 'barber-money-tracker';
-const price = { id: 'price_monthly', object: 'price', active: true, livemode: false, currency: 'usd', unit_amount: 500, type: 'recurring', recurring: { interval: 'month', interval_count: 1, usage_type: 'licensed' } };
+const price = { id: 'price_monthly', object: 'price', active: true, livemode: false, currency: 'usd', unit_amount: 499, type: 'recurring', recurring: { interval: 'month', interval_count: 1, usage_type: 'licensed' } };
 const customers = new Map();
 const subscriptions = new Map();
 const sessions = new Map();
@@ -10,7 +10,7 @@ for (const owner of ['user_A','user_B']) {
   customers.set(customer, { id: customer, object: 'customer', livemode: false, metadata: { app, clerk_user_id: owner } });
   subscriptions.set(subscription, { id: subscription, object: 'subscription', customer, livemode: false, metadata: { app, clerk_user_id: owner }, status: 'active', pause_collection: null,
     items: { has_more: false, data: [{ quantity: 1, price, current_period_end: Math.floor(Date.now()/1000)+86400 }] },
-    latest_invoice: { id: `in_${owner}`, object: 'invoice', customer, livemode: false, status: 'paid', amount_paid: 500, parent: { subscription_details: { subscription } } },
+    latest_invoice: { id: `in_${owner}`, object: 'invoice', customer, livemode: false, status: 'paid', amount_paid: 499, parent: { subscription_details: { subscription } } },
   });
 }
 export function fixtureControl(request) {

@@ -2,13 +2,18 @@ import Stripe from 'stripe';
 import { requireCustomer, apiError, HttpError, type AuthConfig } from './auth.ts';
 import { BillingService, billingClient, type BillingConfig } from './billing.ts';
 import { readJson } from './handlers.ts';
+import { privateTestDatabase, type AccessConfig } from './access.ts';
 
 const headers = { 'Cache-Control': 'no-store' };
-export async function billingResponse(request: Request, config: AuthConfig & BillingConfig, action: 'status' | 'checkout' | 'portal', client?: Stripe) {
+export async function billingResponse(request: Request, config: AuthConfig & AccessConfig, action: 'status' | 'checkout' | 'portal', client?: Stripe) {
   try {
     const owner = await requireCustomer(request, config);
     if (action === 'status' && request.method !== 'GET' || action !== 'status' && request.method !== 'POST') throw new HttpError(405, 'Unsupported method.');
     if (action !== 'status' && Object.keys(await readJson(request)).length) throw new HttpError(400, 'Billing details are determined by your account.');
+    if (privateTestDatabase(config, owner)) {
+      if (action !== 'status') throw new HttpError(403, 'Payments are disabled during private testing.');
+      return Response.json({ paid: false, hasCustomer: false, hasSubscription: false, privateTesting: true }, { headers });
+    }
     const billing = new BillingService(config, client);
     if (action === 'status') return Response.json(await billing.status(owner), { headers });
     const url = action === 'checkout' ? await billing.checkout(owner) : await billing.portal(owner);
@@ -20,6 +25,7 @@ export async function billingResponse(request: Request, config: AuthConfig & Bil
 }
 export async function webhookResponse(request: Request, config: BillingConfig, client?: Stripe) {
   try {
+    if ((config as AccessConfig).APP_ACCESS_MODE === 'private-test') throw new HttpError(403, 'Payments are disabled during private testing.');
     if (!config.STRIPE_WEBHOOK_SECRET) throw new HttpError(503, 'Test-mode webhook verification is not configured.');
     const signature = request.headers.get('stripe-signature');
     if (!signature) throw new HttpError(400, 'Missing webhook signature.');

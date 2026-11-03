@@ -16,7 +16,8 @@
     "test:worker": "node scripts/test-worker.mjs",
     "test:core": "node --experimental-strip-types --test tests/finance.test.ts tests/finance-boundaries.test.ts tests/csv.test.ts tests/transactions.test.ts tests/storage-core.test.ts",
     "test:timezones": "node scripts/test-timezones.mjs",
-    "test:ui": "tsx --test tests/tracker-ui.test.tsx"
+    "test:ui": "tsx --test tests/*ui.test.tsx",
+    "test:worker:private": "node scripts/test-worker.mjs --private"
   },
   "dependencies": {
     "@clerk/backend": "^3.26.5",

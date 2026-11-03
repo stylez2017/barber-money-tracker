@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { MONTHLY_PRICE_CENTS, MONTHLY_PRICE_LABEL } from '../subscription.ts';
 import { HttpError } from './auth.ts';
 import type { Database } from './storage.ts';
 
@@ -9,7 +10,7 @@ export type BillingConfig = {
   STRIPE_PRICE_ID?: string;
   APP_ORIGIN?: string;
 };
-export type BillingStatus = { paid: boolean; hasCustomer: boolean; hasSubscription: boolean };
+export type BillingStatus = { paid: boolean; hasCustomer: boolean; hasSubscription: boolean; privateTesting?: boolean };
 type Account = { user_id: string; billing_key: string; stripe_customer_id: string | null;
   checkout_key: string; checkout_session_id: string | null; checkout_expires_at: number };
 const app = 'barber-money-tracker';
@@ -51,7 +52,7 @@ export class BillingService {
     return url.origin;
   }
   validPrice(price: Stripe.Price): boolean {
-    return price.id === this.config.STRIPE_PRICE_ID && price.livemode === false && price.currency === 'usd' && price.unit_amount === 500 &&
+    return price.id === this.config.STRIPE_PRICE_ID && price.livemode === false && price.currency === 'usd' && price.unit_amount === MONTHLY_PRICE_CENTS &&
       price.type === 'recurring' && price.recurring?.interval === 'month' && price.recurring.interval_count === 1 && price.recurring.usage_type === 'licensed';
   }
   async ensureCustomer(owner: string): Promise<Account & { stripe_customer_id: string }> {
@@ -92,7 +93,7 @@ export class BillingService {
     if (item.quantity !== 1 || !this.validPrice(item.price) || item.current_period_end <= Math.floor(Date.now() / 1000)) return false;
     let invoice = subscription.latest_invoice;
     if (typeof invoice === 'string') invoice = await this.stripe.invoices.retrieve(invoice);
-    return !!invoice && !invoice.livemode && objectId(invoice.customer) === customerId && invoice.status === 'paid' && invoice.amount_paid >= 500 &&
+    return !!invoice && !invoice.livemode && objectId(invoice.customer) === customerId && invoice.status === 'paid' && invoice.amount_paid >= MONTHLY_PRICE_CENTS &&
       objectId(invoice.parent?.subscription_details?.subscription) === subscription.id;
   }
   async status(owner: string): Promise<BillingStatus> {
@@ -110,12 +111,12 @@ export class BillingService {
     return { paid: false, hasCustomer: true, hasSubscription };
   }
   async requirePaid(owner: string) {
-    if (!(await this.status(owner)).paid) throw new HttpError(402, 'An active $5/month subscription is required.');
+    if (!(await this.status(owner)).paid) throw new HttpError(402, `An active ${MONTHLY_PRICE_LABEL}/month subscription is required.`);
   }
   async checkout(owner: string): Promise<string> {
     const origin = this.origin();
     const price = await this.stripe.prices.retrieve(this.config.STRIPE_PRICE_ID!);
-    if (!price.active || !this.validPrice(price)) throw new HttpError(503, 'The $5/month subscription price is not configured correctly.');
+    if (!price.active || !this.validPrice(price)) throw new HttpError(503, `The ${MONTHLY_PRICE_LABEL}/month subscription price is not configured correctly.`);
     let account = await this.ensureCustomer(owner);
     const holds = await this.db.prepare('SELECT charge_id FROM billing_holds WHERE stripe_customer_id = ? AND blocked = 1 LIMIT 1').bind(account.stripe_customer_id).all();
     if (holds.results.length) throw new HttpError(409, 'Billing requires review before another subscription can be started.');

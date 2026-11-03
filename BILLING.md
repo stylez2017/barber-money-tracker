@@ -6,13 +6,13 @@ in the owner's Stripe account by this work. Public URLs remain disabled.
 
 ## Contract
 
-- One subscription: USD 500 cents, recurring monthly, quantity one, licensed use.
+- One subscription: USD 499 cents, recurring monthly, quantity one, licensed use.
 - Checkout and portal sessions are server-created for the verified Clerk user.
   The browser cannot choose a customer, price, amount or return URL.
 - Live secret keys, live price objects, and live webhook events are rejected.
   Live activation requires a separate approved code/configuration change.
 - Access requires an active subscription for the configured price, an unexpired
-  paid period, and the latest invoice paid for at least USD 500 cents.
+  paid period, and the latest invoice paid for at least USD 499 cents.
 - Trialing, incomplete, paused, past-due, unpaid, canceled and expired access is
   denied. Cancellation scheduled for period end retains access through that paid
   period. Saved records are not deleted when subscription access ends.
@@ -34,7 +34,7 @@ Set these for Cloudflare Previews Base, never paste secret values into chat:
 | --- | --- | --- |
 | STRIPE_SECRET_KEY | Secret | Sandbox/test key beginning sk_test_ or rk_test_ |
 | STRIPE_WEBHOOK_SECRET | Secret | Signing secret for this test endpoint/listener |
-| STRIPE_PRICE_ID | Plain variable | Test recurring price: USD 5.00 each month |
+| STRIPE_PRICE_ID | Plain variable | Test recurring price: USD 4.99 each month |
 | APP_ORIGIN | Plain variable | Exact private app origin, with no path or query |
 
 The Clerk publishable key and secret key configured earlier are also required.
@@ -59,7 +59,7 @@ that reapplies 0001 and then assume 0002 succeeded.
 ## Stripe account-side setup still required
 
 Use a Stripe sandbox/test environment. Create a Barber Money Tracker product and
-one USD 5.00/month price. Do not add a trial, promotion code, metered billing or
+one USD 4.99/month price. Do not add a trial, promotion code, metered billing or
 quantity selector. Configure the test Billing Portal for payment-method updates
 and cancellation at period end; disable plan/quantity switching. Test declines,
 authentication-required payments, renewals, cancellations and resubscription.
@@ -104,3 +104,10 @@ local workerd with local D1 and an isolated Stripe HTTP fixture. Fixture hooks
 exist only in a temporary local test wrapper, never in the production app.
 Neither test suite calls Stripe's real API or charges a real payment method.
 Account-connected Stripe and Clerk/browser acceptance checks remain required.
+
+## Private testing exception
+
+Stripe setup is paused. The explicit, allowlisted private-test mode documented
+in PRIVATE_TESTING.md uses only test D1 and never calls Stripe. Checkout, portal
+and webhooks are disabled in that mode. The billing implementation and $4.99
+monthly price remain for future activation; production still fails closed.

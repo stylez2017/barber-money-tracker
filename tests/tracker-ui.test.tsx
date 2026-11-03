@@ -12,7 +12,8 @@ function fixture(initial: Transaction[] = []) {
   const rows = new Map(initial.map(row => [row.id,{...row}]));
   const requests: Record<string,unknown>[] = [];
   const state = { failSave: false, loseAcknowledgement: false, waitForSave: null as Promise<void> | null };
-  const api: AccountApi = async (_, init) => {
+  const api: AccountApi = async (path, init) => {
+    if(path === '/api/savings') return Response.json({goal:100000,saved:0,percent:20});
     if (!init?.method) return Response.json({ rows:[...rows.values()], next:null });
     const body = JSON.parse(String(init.body)); requests.push(body);
     if (state.waitForSave) await state.waitForSave;

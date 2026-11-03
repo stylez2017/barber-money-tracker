@@ -2,7 +2,7 @@
 
 Completed on the current private release candidate:
 
-- npm test: 46 data/API tests and 7 local DOM interface tests passed, including original financial calculations, signed
+- npm test: 51 data/API tests and 10 local DOM interface tests passed, including original financial calculations, signed
   Clerk sessions, D1 owner isolation, payment restrictions, duplicate checkout,
   cancellations/resubscription, webhook verification/retries/order, refunds and
   dispute holds.
@@ -51,3 +51,17 @@ pending. No payment bypass, publication or live payment activation was added.
 A further interface regression test verifies that a server-committed save whose
 acknowledgement is lost can be retried without creating a duplicate record. Each
 new draft retains its UUID until saved or explicitly discarded.
+
+## Stripe-free private testing checkpoint
+
+- The 61 app tests include private-mode authentication/allowlisting, missing-config
+  rejection, disabled billing endpoints, test/production D1 separation, Money
+  Saver persistence/validation/ownership, and offline UI draft retention.
+- Local workerd private integration passes with zero Stripe configuration and
+  only transactions + savings schemas (no billing tables). It verifies signed
+  Clerk sessions, rejected expired/anonymous/unapproved sessions, D1 CRUD,
+  savings persistence and denied checkout. The paid-mode Worker suite also passes.
+- Timezones, tooling, typecheck, OpenNext build and deployment dry run pass.
+- These are local tests using temporary signed identities, not proof that real
+  Clerk email/Google login or remote Cloudflare Access enforcement works.
+- Both URL switches stay false; no remote D1 migration or deployment was run.

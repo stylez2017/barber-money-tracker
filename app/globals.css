@@ -11,3 +11,5 @@
 .auth-links { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 24px; }
 .account-email { color: #53665b; overflow-wrap: anywhere; margin-bottom: 16px; }
 button:disabled { opacity: .55; cursor: not-allowed; }
+
+.savings-panel{margin-bottom:24px}.savings-content{padding:0 24px 24px}.savings-content p{line-height:1.6}.savings-content progress{width:100%;accent-color:var(--green)}.savings-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin:20px 0}.savings-fields label{display:grid;gap:8px}.savings-fields input{width:100%;box-sizing:border-box}

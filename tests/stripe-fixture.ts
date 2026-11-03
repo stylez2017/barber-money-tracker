@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 import type { Database } from '../lib/server/storage.ts';
 
 export function stripeFixture() {
-  const price = { id: 'price_monthly', object: 'price', active: true, livemode: false, currency: 'usd', unit_amount: 500, type: 'recurring', recurring: { interval: 'month', interval_count: 1, usage_type: 'licensed' } };
+  const price = { id: 'price_monthly', object: 'price', active: true, livemode: false, currency: 'usd', unit_amount: 499, type: 'recurring', recurring: { interval: 'month', interval_count: 1, usage_type: 'licensed' } };
   type Subscription = {
     id: string; object: string; customer: string; livemode: boolean; metadata: Record<string,string>; status: string; pause_collection: object | null;
     items: { has_more: boolean; data: { quantity: number; price: typeof price; current_period_end: number }[] };
@@ -56,7 +56,7 @@ export function stripeFixture() {
     const subscription: Subscription = {
       id: `sub_${owner}`, object: 'subscription', customer: `cus_${owner}`, livemode: false, metadata: { app: 'barber-money-tracker', clerk_user_id: owner }, status: 'active', pause_collection: null,
       items: { has_more: false, data: [{ quantity: 1, price: structuredClone(price), current_period_end: Math.floor(Date.now()/1000)+86400 }] },
-      latest_invoice: { id: `in_${owner}`, object: 'invoice', customer: `cus_${owner}`, livemode: false, status: 'paid', amount_paid: 500, parent: { subscription_details: { subscription: `sub_${owner}` } } },
+      latest_invoice: { id: `in_${owner}`, object: 'invoice', customer: `cus_${owner}`, livemode: false, status: 'paid', amount_paid: 499, parent: { subscription_details: { subscription: `sub_${owner}` } } },
     };
     state.subscriptions.set(subscription.id, subscription);
     return subscription;

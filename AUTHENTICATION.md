@@ -72,3 +72,11 @@ verified against Stripe on every financial request; browser redirects and stored
 webhook snapshots cannot grant paid access. See BILLING.md and
 RELEASE_READINESS.md. Keep public access disabled until account-connected
 acceptance tests and explicit launch approval are complete.
+
+## Stripe-free private testing
+
+See PRIVATE_TESTING.md. Explicit private mode still verifies Clerk sessions on
+every request, requires an exact approved Clerk user ID and uses PRIVATE_TEST_DB
+without falling back to production DB. The default subscription path is unchanged.
+Savings settings are owner-scoped in migration 0003; private testing does not
+require the billing schema or Stripe configuration.

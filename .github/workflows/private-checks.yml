@@ -36,3 +36,7 @@ jobs:
       - run: npm run typecheck
       - name: Validate Worker bundle without uploading
         run: npm run check:cloudflare
+      - name: Test local Worker and D1 without Stripe
+        run: npm run test:worker:private
+      - name: Test preserved billing implementation using offline fixtures
+        run: npm run test:worker

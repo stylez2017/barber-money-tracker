@@ -32,7 +32,7 @@ test('unpaid customers cannot read, save, delete or import financial records thr
   }
   assert.equal(env.sqlite.prepare('SELECT count(*) AS n FROM transactions').get()!.n, 0);
 });
-test('only an active, currently paid $5 USD monthly plan grants access', async () => {
+test('only an active, currently paid $4.99 USD monthly plan grants access', async () => {
   const env = database(), fake = stripeFixture();
   await fake.paid(env.DB, 'user_A');
   const original = structuredClone(fake.state.subscriptions.get('sub_user_A')!);
@@ -108,10 +108,10 @@ test('checkout uses server pricing, fixed return URLs and persisted idempotency 
 });
 test('checkout rejects an incorrectly configured price and existing subscriptions', async () => {
   const env = database(), fake = stripeFixture();
-  fake.state.price.unit_amount = 100;
+  fake.state.price.unit_amount = 500;
   await assert.rejects(new BillingService(env, fake.stripe).checkout('user_A'));
   assert.equal(fake.state.customers.size, 0);
-  fake.state.price.unit_amount = 500;
+  fake.state.price.unit_amount = 499;
   await fake.paid(env.DB, 'user_A');
   const response = await billingResponse(request('user_A', {}), env, 'checkout', fake.stripe);
   assert.equal(response.status, 409);

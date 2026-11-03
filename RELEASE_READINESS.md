@@ -8,7 +8,7 @@
   safeguards, without relying on OpenNext's unsupported Node middleware path.
 - Owner-scoped D1 storage, bounded import requests and duplicate-safe imports
   that preserve existing cloud edits and leave browser originals untouched.
-- Stripe test-mode USD 5/month checkout, persisted idempotency keys, portal,
+- Stripe test-mode USD 4.99/month checkout, persisted idempotency keys, portal,
   verified webhooks, refund/dispute holds and server-side paid-access checks.
 - Production and preview URL flags remain false. Dashboard-managed variables
   are preserved during future Wrangler deploys with keep_vars=true.
@@ -45,12 +45,15 @@ the old default branch: its configuration still enables `workers_dev`.
 
 1. Verify the saved Worker-level owner-only Access rule in a real browser before
    enabling a test URL. The earlier unsaved standalone application was discarded.
-2. Apply 0002_billing.sql to TEST, after checking schema/migration history.
-3. Stripe setup is paused at the owner's request. Current account UI and financial
-   APIs still require verified billing; a usable Stripe-free private testing path
-   remains to be implemented without allowing access to production data.
-4. Arrange an owner-only private test instance, or authenticated local testing,
-   for real Clerk email/Google sign-in and real Stripe sandbox checkout.
+2. Add `PRIVATE_TEST_USER_IDS` to Previews Base using the exact approved Clerk
+   user IDs, and apply `0003_savings.sql` to TEST only. The existing transactions
+   schema is sufficient; billing migration 0002 is not needed for private mode.
+3. The Stripe-free private path is implemented. Production stays in subscription
+   mode; no production bypass is configured. Stripe setup remains paused.
+4. Remote Cloudflare credentials are not attached to this workspace. GitHub
+   Actions secrets do not grant this shell access. No remote preview has been
+   uploaded, enabled or tested. Arrange authenticated local testing or a reviewed
+   owner-protected preview before real email/Google acceptance testing.
 
 ## Additional core verification completed locally
 
@@ -59,7 +62,7 @@ and a local backup/restore. Financial date boundaries pass in three time zones.
 Local DOM tests cover forms, offline retries, filters, legacy import confirmation
 and CSV downloads. No real Stripe account or real browser session is used.
 
-## Required connected acceptance tests
+## Required connected acceptance tests (private testing)
 
 - Confirm signed-out browsers and non-allowlisted Access identities cannot open
   the private test app. Check all configured Worker origins/routes, not just one.
@@ -67,6 +70,9 @@ and CSV downloads. No real Stripe account or real browser session is used.
   cross-tab sign-out, same-device account switching and account isolation.
 - Use two real test customers. Attempt direct record API access using the other
   customer's IDs; verify reads/writes/deletes/imports cannot cross owners.
+
+## Deferred billing acceptance tests (not required for private mode)
+
 - Complete test checkout, decline a payment, complete 3DS, cancel/restart checkout,
   double-click checkout, retry a failed request and return with a forged success
   URL. Only verified paid accounts may access financial APIs.

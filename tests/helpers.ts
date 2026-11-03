@@ -25,7 +25,7 @@ export function request(user: string | null, body?: unknown, jwt?: string, path 
 }
 export function database() {
   const sqlite = new DatabaseSync(':memory:');
-  for (const name of ['0001_transactions.sql','0002_billing.sql']) sqlite.exec(readFileSync(new URL(`../migrations/${name}`, import.meta.url), 'utf8'));
+  for (const name of ['0001_transactions.sql','0002_billing.sql','0003_savings.sql']) sqlite.exec(readFileSync(new URL(`../migrations/${name}`, import.meta.url), 'utf8'));
   const db: Database = {
     prepare(sql): Statement {
       let values: (string | number | null)[] = [];

@@ -1,9 +1,8 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import type { AuthConfig } from './auth';
-import type { BillingConfig } from './billing';
-import type { Database } from './storage';
+import type { AccessConfig } from './access';
 
-export type RuntimeConfig = AuthConfig & BillingConfig & { DB?: Database };
+export type RuntimeConfig = AuthConfig & AccessConfig;
 export async function runtimeConfig(): Promise<RuntimeConfig> {
   try {
     return (await getCloudflareContext({ async: true })).env as unknown as RuntimeConfig;
@@ -18,6 +17,8 @@ export async function runtimeConfig(): Promise<RuntimeConfig> {
       STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
       STRIPE_PRICE_ID: process.env.STRIPE_PRICE_ID,
       APP_ORIGIN: process.env.APP_ORIGIN,
+      APP_ACCESS_MODE: process.env.APP_ACCESS_MODE,
+      PRIVATE_TEST_USER_IDS: process.env.PRIVATE_TEST_USER_IDS,
     };
   }
 }

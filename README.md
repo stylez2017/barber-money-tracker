@@ -32,9 +32,11 @@ For core tracker checks without a Stripe account, run `npm run test:core` and
 - The Transactions view includes all saved records, with search, category filters, editing, confirmed deletion, and CSV export.
 - Amounts are stored as integer cents. Entries must be positive and cannot be future dated.
 - Customer sign-in uses Clerk. Cloud transaction storage uses Cloudflare D1 through authenticated server routes that restrict each account to its own records. Existing browser records under `barber-money-tracker-v1` can be explicitly imported after sign-in; the browser copy is preserved. CSV export is not a CSV import or restore feature.
-- Stripe test-mode checkout and subscription management use a fixed $5 USD/month plan. Every financial API request requires a verified Clerk session and a currently paid subscription. Live payment keys are deliberately rejected. Account-connected testing and launch approval are still required; keep public access disabled.
+- Stripe test-mode checkout and subscription management use a fixed $4.99 USD/month plan. Every financial API request requires a verified Clerk session. Subscription mode also requires a currently paid subscription; explicit private-test mode instead restricts access to approved Clerk user IDs and an isolated test D1 binding, without Stripe. Live payment keys are deliberately rejected. Account-connected testing and launch approval are still required; keep public access disabled.
 
 Clerk runtime configuration and the D1 schema are required. See [AUTHENTICATION.md](./AUTHENTICATION.md) for configuration, security boundaries, migration status, and remaining live tests. See [BILLING.md](./BILLING.md) for test-mode billing and [RELEASE_READINESS.md](./RELEASE_READINESS.md) for remaining account-side work. No external fonts are required.
+
+Money Saver saves a goal, amount already set aside and a profit percentage to the account. Suggestions use the selected period’s positive net profit, are capped at the remaining goal, and never change transaction totals or move money. See [PRIVATE_TESTING.md](./PRIVATE_TESTING.md) for Stripe-free testing setup.
 
 ## Cloudflare Workers
 

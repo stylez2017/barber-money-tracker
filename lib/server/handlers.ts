@@ -1,7 +1,7 @@
 import type Stripe from 'stripe';
-import { BillingService, type BillingConfig } from './billing.ts';
+import { financialDatabase, type AccessConfig } from './access.ts';
 import { apiError, HttpError, requireCustomer, type AuthConfig } from './auth.ts';
-import { deleteRecord, importRecords, readRecords, saveRecord, transactionInput, type Database } from './storage.ts';
+import { deleteRecord, importRecords, readRecords, saveRecord, transactionInput } from './storage.ts';
 
 const headers = { 'Cache-Control': 'no-store' };
 export async function sessionResponse(request: Request, config: AuthConfig) {
@@ -33,30 +33,29 @@ export async function readJson(request: Request): Promise<Record<string, unknown
     throw new HttpError(400, 'Invalid JSON request.');
   } finally { reader.releaseLock(); }
 }
-export async function transactionResponse(request: Request, config: AuthConfig & BillingConfig, client?: Stripe) {
+export async function transactionResponse(request: Request, config: AuthConfig & AccessConfig, client?: Stripe) {
   try {
     const owner = await requireCustomer(request, config);
-    if (!config.DB) throw new HttpError(503, 'Financial storage is not configured.');
-    await new BillingService(config, client).requirePaid(owner);
+    const db = await financialDatabase(config, owner, client);
     if (request.method === 'GET') {
       const query = new URL(request.url).searchParams;
       if ([...query.keys()].some(key => key !== 'after')) throw new HttpError(400, 'Unsupported query.');
       const after = query.get('after') ?? '';
       if (after.length > 128) throw new HttpError(400, 'Invalid record cursor.');
-      const rows = await readRecords(config.DB, owner, after);
+      const rows = await readRecords(db, owner, after);
       return Response.json({ rows, next: rows.length === 500 ? rows.at(-1)!.id : null }, { headers });
     }
     if (request.method !== 'POST') throw new HttpError(405, 'Unsupported method.');
     const body = await readJson(request);
     const allowed = body.operation === 'save' ? ['operation','transaction'] : body.operation === 'delete' ? ['operation','id'] : ['operation','rows'];
     if (Object.keys(body).some(key => !allowed.includes(key))) throw new HttpError(400, 'Unsupported request field.');
-    if (body.operation === 'save') await saveRecord(config.DB, owner, transactionInput(body.transaction));
+    if (body.operation === 'save') await saveRecord(db, owner, transactionInput(body.transaction));
     else if (body.operation === 'delete') {
       if (typeof body.id !== 'string' || !body.id.length || body.id.length > 128) throw new HttpError(400, 'Invalid record ID.');
-      await deleteRecord(config.DB, owner, body.id);
+      await deleteRecord(db, owner, body.id);
     } else if (body.operation === 'import') {
       if (!Array.isArray(body.rows) || body.rows.length > 100) throw new HttpError(400, 'Import at most 100 records per request.');
-      await importRecords(config.DB, owner, body.rows.map(transactionInput));
+      await importRecords(db, owner, body.rows.map(transactionInput));
     } else throw new HttpError(400, 'Unsupported operation.');
     return Response.json({ saved: true }, { headers });
   } catch (error) { return apiError(error); }
