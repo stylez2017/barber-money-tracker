@@ -87,6 +87,12 @@ try {
   assert.ok(ready, 'Worker must start and reject missing sessions');
   const session = await fetch(`${origin}/api/session`, { headers: { Authorization: `Bearer ${token('user_A')}` } });
   assert.equal(session.status, 200, 'Actual workerd must verify the signed session');
+  assert.equal(session.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(session.headers.get('x-frame-options'), 'DENY');
+  assert.ok(session.headers.get('x-robots-tag')?.includes('noindex'));
+  const page = await fetch(origin);
+  assert.equal(page.status,200);
+  assert.ok(!(await page.text()).includes(config.vars.CLERK_SECRET_KEY), 'Server secret must not appear in HTML');
   assert.deepEqual(await session.json(), { userId: 'user_A' });
   assert.equal((await call(null)).status, 401);
   assert.equal((await call('user_A', undefined, token('user_A', { exp: 1 }))).status, 401);

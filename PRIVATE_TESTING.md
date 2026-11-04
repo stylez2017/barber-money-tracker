@@ -16,7 +16,19 @@ Repository configuration creates this binding only in previews and points it at
 Production has no private mode variable or private binding. Both URL switches
 remain false, and no routes/custom domains are added.
 
-## Remaining account setup (do not publish)
+## Account-side progress confirmed in this conversation
+
+- Clerk development test user created; owner supplied its user ID.
+- Owner reports PRIVATE_TEST_USER_IDS saved to Previews Base.
+- Owner confirmed transactions and savings_plans tables in TEST.
+- Screenshot confirmed preview-only PRIVATE_TEST_DB uses the test database;
+  owner reports the binding was saved.
+- APP_ACCESS_MODE=private-test was the last requested dashboard change, but its
+  save was not confirmed. The source preview configuration also supplies it.
+- Worker Access All traffic / Owner testing only and both URL switches disabled
+  were confirmed by earlier screenshots, not re-read live from this workspace.
+
+## Setup reference (verify remaining items; do not repeat completed work)
 
 1. In the **Clerk development app → Users**, select/create the owner's test user
    and copy its `user_...` ID. No password or secret key needs to be shared.
@@ -38,7 +50,10 @@ remain false, and no routes/custom domains are added.
 Cloudflare credentials are not attached to this workspace. The token stored in
 GitHub Actions is intentionally unreadable here. A future remote check needs a
 Cloudflare-authorized execution path; do not paste the token into chat. The
-manual checks workflow needs no deployment secret and never uploads anything.
+build/test job needs no deployment secret. A separate read-only metadata job uses
+the saved GitHub secrets, prints only sanitized check results, and never uploads
+anything. Both jobs run for internal pull requests or manual dispatch. Fork PRs
+never receive the Cloudflare token.
 
 ## Local checks
 
@@ -67,3 +82,19 @@ as a business expense. Settings persist separately from transactions.
 
 Local completion does not mean the remote app is ready to open. A reachable
 owner-protected instance and these real-account checks remain outstanding.
+
+## Review follow-up
+
+The workspace matched the remote development tree before this follow-up; there
+was no unsaved work. Access denial now clears the financial interface and
+invalidates older pending status responses. Transient network failures retain
+unsaved drafts. Loaded records reject duplicate IDs and malformed categories;
+server and client share amount/shape limits. Money Saver shows remaining goal,
+profit after the suggestion, and an explicitly conditional estimate of similar
+periods to the goal. Search exclusion headers are defense in depth, not access
+control. Cloudflare Access and Clerk remain required.
+
+The Cloudflare preflight inspects Worker/D1 metadata with GET requests only. It
+cannot prove saved table schemas, valid Clerk credentials, Access enforcement,
+mobile browser behavior or sign-in/recovery. Complete those on a protected test
+instance before considering private acceptance testing finished.

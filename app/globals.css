@@ -13,3 +13,6 @@
 button:disabled { opacity: .55; cursor: not-allowed; }
 
 .savings-panel{margin-bottom:24px}.savings-content{padding:0 24px 24px}.savings-content p{line-height:1.6}.savings-content progress{width:100%;accent-color:var(--green)}.savings-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin:20px 0}.savings-fields label{display:grid;gap:8px}.savings-fields input{width:100%;box-sizing:border-box}
+/* Keep account details, large balances and native date controls inside small screens. */
+.account-email,.notice{overflow-wrap:anywhere}.stat-value{overflow-wrap:anywhere}.form-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.form-grid input{min-width:0;box-sizing:border-box;max-width:100%}.savings-fields>*{min-width:0}.savings-fields{grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr))}
+@media(max-width:380px){.form-grid{grid-template-columns:1fr}.modal-actions{flex-wrap:wrap}.breadcrumb{min-width:0}.topbar>.secondary-button{font-size:11px;padding:8px}}

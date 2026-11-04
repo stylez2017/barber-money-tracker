@@ -46,3 +46,12 @@ test('offline, failed and unacknowledged mutations never report a successful sav
   }
   await assert.doesNotReject(writeTransaction(async () => Response.json({saved:true}),row));
 });
+
+test('cloud loads reject duplicate IDs across pages and malformed categories rather than inflate totals',async()=>{
+ let page=0;
+ await assert.rejects(loadTransactions(async()=>Response.json({rows:[row],next:page++===0?row.id:null})),/Duplicate/);
+ for(const value of [{...row,kind:['haircut']},{...row,amount:100_000_000_000},{...row,note:'x'.repeat(161)},{...row,id:''}]) {
+  await assert.rejects(loadTransactions(async()=>Response.json({rows:[value],next:null})));
+  assert.throws(()=>parseLegacy(JSON.stringify([value])));
+ }
+});

@@ -58,3 +58,11 @@ test('Money Saver uses positive net profit, rounds cents, caps recommendations a
   assert.equal(savingsSummary({goal:10000,saved:0,percent:20},-1000).suggested,0);
   assert.deepEqual(savingsSummary({goal:10000,saved:12000,percent:20},50000),{remaining:0,progress:100,suggested:0});
 });
+
+test('private transaction writes reject malformed categories and out-of-form-range cents',async()=>{
+ const env=fixture();
+ for(const patch of [{kind:['haircut']},{amount:100_000_000_000},{amount:1.5},{note:'x'.repeat(161)}]) {
+  assert.equal((await transactionResponse(request('user_A',{operation:'save',transaction:{...row,...patch}}),env)).status,400);
+ }
+ assert.equal(env.test.sqlite.prepare('SELECT count(*) AS n FROM transactions').get()!.n,0);
+});

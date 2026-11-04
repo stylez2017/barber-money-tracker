@@ -13,3 +13,11 @@ export function savingsSummary(plan: SavingsPlan, profit: number) {
   return { remaining, progress: Math.min(100, Math.floor(plan.saved / plan.goal * 100)),
     suggested: Math.min(remaining, Math.round(Math.max(0, profit) * plan.percent / 100)) };
 }
+export function savingsInsights(plan: SavingsPlan, profit: number) {
+  const summary = savingsSummary(plan, profit);
+  const perPeriod = Math.round(Math.max(0, profit) * plan.percent / 100);
+  return {
+    availableAfterSuggestion: Math.max(0, profit) - summary.suggested,
+    periodsToGoal: summary.remaining === 0 ? 0 : perPeriod > 0 ? Math.ceil(summary.remaining / perPeriod) : null,
+  };
+}

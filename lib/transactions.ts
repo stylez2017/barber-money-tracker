@@ -1,4 +1,5 @@
-import { type Transaction, validTransaction } from './finance.ts';
+import { type Transaction } from './finance.ts';
+import { validStoredTransaction } from './validation.ts';
 export const LEGACY_KEY = 'barber-money-tracker-v1';
 export type AccountApi = (path: string, init?: RequestInit) => Promise<Response>;
 // Client-side race guard only; the server independently verifies every token.
@@ -10,7 +11,7 @@ export function checkAccountToken(token: string, owner: string, sessionId: strin
 }
 export function parseLegacy(raw: string): Transaction[] {
   const rows: unknown = JSON.parse(raw);
-  if (!Array.isArray(rows) || !rows.every(row => validTransaction(row) && row.id.length > 0 && row.id.length <= 128 && row.note.length <= 160) || new Set(rows.map(row => row.id)).size !== rows.length) throw new Error('Invalid browser records');
+  if (!Array.isArray(rows) || !rows.every(validStoredTransaction) || new Set(rows.map(row => row.id)).size !== rows.length) throw new Error('Invalid browser records');
   return rows;
 }
 async function responseJson(response: Response) {
@@ -19,10 +20,15 @@ async function responseJson(response: Response) {
 }
 export async function loadTransactions(api: AccountApi): Promise<Transaction[]> {
   const rows: Transaction[] = [];
+  const seen = new Set<string>();
   let cursor = '';
   while (true) {
     const page = await responseJson(await api(`/api/transactions?after=${encodeURIComponent(cursor)}`));
-    if (!Array.isArray(page.rows) || !page.rows.every(validTransaction)) throw new Error('Invalid cloud records');
+    if (!Array.isArray(page.rows) || page.rows.length > 500 || !page.rows.every(validStoredTransaction)) throw new Error('Invalid cloud records');
+    for (const row of page.rows) {
+      if (seen.has(row.id)) throw new Error('Duplicate cloud record');
+      seen.add(row.id);
+    }
     rows.push(...page.rows);
     if (page.next === null) return rows;
     if (typeof page.next !== 'string' || page.next <= cursor) throw new Error('Invalid record cursor');

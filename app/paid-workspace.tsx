@@ -13,14 +13,18 @@ export default function PaidWorkspace({ api, user, onSignOut }: {
   const [busy, setBusy] = useState(false);
   const locked = useRef(false);
   const mounted = useRef(true);
+  const accessVersion = useRef(0);
   const refresh = useCallback(async () => {
+    const version = ++accessVersion.current;
     try {
       const response = await api('/api/billing/status');
+      if (!mounted.current || version !== accessVersion.current) return;
+      if (response.status === 401 || response.status === 403) setStatus(null);
       if (!response.ok) throw new Error();
       const next = await response.json();
       if (typeof next.paid !== 'boolean' || typeof next.hasCustomer !== 'boolean' || typeof next.hasSubscription !== 'boolean' || (next.privateTesting !== undefined && typeof next.privateTesting !== 'boolean')) throw new Error();
-      if (mounted.current) { setStatus(next); setError(''); }
-    } catch { if (mounted.current) { setError('Your account access could not be verified. Please retry.'); } }
+      if (mounted.current && version === accessVersion.current) { setStatus(next); setError(''); }
+    } catch { if (mounted.current && version === accessVersion.current) { setError('Your account access could not be verified. Please retry.'); } }
   }, [api]);
   useEffect(() => {
     mounted.current = true;
@@ -34,8 +38,10 @@ export default function PaidWorkspace({ api, user, onSignOut }: {
   const guardedApi: AccountApi = useCallback(async (path, init) => {
     try {
       const response = await api(path, init);
+      if (mounted.current && [401,402,403].includes(response.status)) accessVersion.current++;
       if (mounted.current && response.status === 402) setStatus({ paid: false, hasCustomer: true, hasSubscription: true });
       if (mounted.current && response.status === 401) { setStatus(null); setError('Please sign in again to continue.'); }
+      if (mounted.current && response.status === 403) { setStatus(null); setError('This account is not approved for access. Contact the app owner.'); }
       if (mounted.current && response.status === 503) setError('Your records could not be accessed. Please retry.');
       return response;
     } catch (error) {

@@ -30,10 +30,11 @@
 
 ## Manual cloud checks
 
-`.github/workflows/private-checks.yml` is manually triggered only. It runs tests,
+`.github/workflows/private-checks.yml` runs on pull requests and manual dispatch. It runs tests,
 checks private configuration, builds the app and performs a Worker dry run.
-It has read-only repository permissions and does not use deployment credentials,
-upload code, migrate a database or enable URLs. It must be present on the default
+It has read-only repository permissions. The build/test job has no deployment
+credentials; the separate Cloudflare preflight uses the saved token only for GET
+metadata checks. Neither job uploads code, migrates a database or enables URLs. It must be present on the default
 branch before GitHub offers its manual Run workflow button.
 
 Wrangler's named preview command requires an active preview URL. A usable
@@ -45,9 +46,9 @@ the old default branch: its configuration still enables `workers_dev`.
 
 1. Verify the saved Worker-level owner-only Access rule in a real browser before
    enabling a test URL. The earlier unsaved standalone application was discarded.
-2. Add `PRIVATE_TEST_USER_IDS` to Previews Base using the exact approved Clerk
-   user IDs, and apply `0003_savings.sql` to TEST only. The existing transactions
-   schema is sufficient; billing migration 0002 is not needed for private mode.
+2. Owner has confirmed the preview user allowlist, savings schema and preview-only
+   binding. Confirm the final APP_ACCESS_MODE=private-test save. Billing migration
+   0002 is not needed for private mode. See PRIVATE_TESTING.md for exact setup.
 3. The Stripe-free private path is implemented. Production stays in subscription
    mode; no production bypass is configured. Stripe setup remains paused.
 4. Remote Cloudflare credentials are not attached to this workspace. GitHub

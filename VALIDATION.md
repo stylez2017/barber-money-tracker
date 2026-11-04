@@ -65,3 +65,30 @@ new draft retains its UUID until saved or explicitly discarded.
 - These are local tests using temporary signed identities, not proof that real
   Clerk email/Google login or remote Cloudflare Access enforcement works.
 - Both URL switches stay false; no remote D1 migration or deployment was run.
+
+## Full project review follow-up
+
+Workspace tree matched GitHub development commit b9f726c before editing; the
+working tree was clean. Main remains the older, undeployed baseline.
+
+- npm test: 56 data/API/preflight tests and 12 UI tests pass (68 total).
+- npm run test:core: 24 tests pass; timezone checks and both tooling tests pass.
+- TypeScript, OpenNext build and Worker deployment dry run pass.
+- Both local Worker suites pass, including actual response security headers and
+  absence of the server Clerk secret from rendered HTML.
+- npm audit reports zero known vulnerabilities in the installed dependency tree.
+- Original finance calculations and original finance tests remain unchanged.
+- New regressions cover revoked access, stale status response ordering, offline
+  draft retention, duplicate/corrupt cloud records, amount limits, savings
+  projections, and metadata-only Cloudflare checks with redacted errors.
+- Mobile CSS was reviewed and improved for narrow layouts. Actual mobile browser
+  acceptance is still needed; DOM tests do not prove viewport rendering.
+- Prepared GitHub CI runs on pull requests or manual dispatch. Its separate Cloudflare
+  job uses the saved token for GET metadata only; no deploy or migration command
+  exists in that job. Remote check results are separate from these local results.
+
+The follow-up source upload was blocked by automatic approval review because the
+GitHub repository is public. Earlier source-upload approval was considered scoped
+to the previous checkpoint. The new workflow and changes are committed locally
+but not uploaded; no new PR or remote CI run was created. Existing GitHub branch
+head remains b9f726c until explicit approval of this additional source upload.

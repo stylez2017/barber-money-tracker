@@ -1,4 +1,5 @@
-import { type Transaction, validTransaction } from '../finance.ts';
+import { type Transaction } from '../finance.ts';
+import { validStoredTransaction } from '../validation.ts';
 import { HttpError } from './auth.ts';
 
 export interface Statement {
@@ -11,8 +12,7 @@ export interface Database {
   batch(statements: Statement[]): Promise<unknown>;
 }
 export function transactionInput(value: unknown): Transaction {
-  if (!validTransaction(value) || !value.id.length || value.id.length > 128 || value.note.length > 160 ||
-      Object.keys(value).some(key => !['id', 'date', 'kind', 'amount', 'note'].includes(key))) {
+  if (!validStoredTransaction(value)) {
     throw new HttpError(400, 'Enter a valid transaction.');
   }
   return { id: value.id, date: value.date, kind: value.kind, amount: value.amount, note: value.note };
