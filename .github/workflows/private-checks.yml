@@ -1,0 +1,62 @@
+name: Private app checks
+
+# These workflows deliberately cannot deploy or enable any URL.
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: private-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Check private configuration
+        run: node scripts/check-private-config.mjs
+      - run: npm test
+      - run: npm run test:timezones
+      - run: npm run test:tooling
+      - run: npm run build:cloudflare
+      - run: npm run typecheck
+      - name: Validate Worker bundle without uploading
+        run: npm run check:cloudflare
+      - name: Test local Worker and D1 without Stripe
+        run: npm run test:worker:private
+      - name: Test preserved billing implementation using offline fixtures
+        run: npm run test:worker
+
+  cloudflare-preflight:
+    # Never supply repository credentials to fork pull requests.
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Read Cloudflare setup metadata without deploying
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node scripts/cloudflare-preflight.mjs

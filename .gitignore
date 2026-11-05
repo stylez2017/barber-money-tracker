@@ -7,3 +7,6 @@ out/
 .open-next/
 .wrangler/
 .dev.vars*
+
+# Scratch files, local test artifacts, and private database exports
+work/

@@ -4,7 +4,7 @@ A responsive Next.js and Tailwind CSS application for independent barbers. Track
 
 ## Development
 
-Requires Node.js 20.9 or newer and npm.
+Use Node.js 24 (pinned in .node-version) and npm.
 
 ```sh
 npm ci
@@ -16,9 +16,13 @@ npm run dev
 ```sh
 npm test
 npm run typecheck
+npm run test:timezones
 npm run build
 npm start
 ```
+
+For core tracker checks without a Stripe account, run `npm run test:core` and
+`npm run test:ui`. Interface tests use a local DOM and an in-memory API.
 
 ## How it works
 
@@ -27,10 +31,12 @@ npm start
 - Enter the full weekly booth rent once on the date paid. Rent is not automatically recurring or prorated.
 - The Transactions view includes all saved records, with search, category filters, editing, confirmed deletion, and CSV export.
 - Amounts are stored as integer cents. Entries must be positive and cannot be future dated.
-- Data is stored in this browser's localStorage, under `barber-money-tracker-v1`. It does not sync between browsers or devices. Clearing browser data removes records; export CSV regularly as a backup. CSV export is not an import or restore feature.
-- No authentication, backend, subscription billing, or Stripe integration is included. The planned future subscription price is $5/month.
+- Customer sign-in uses Clerk. Cloud transaction storage uses Cloudflare D1 through authenticated server routes that restrict each account to its own records. Existing browser records under `barber-money-tracker-v1` can be explicitly imported after sign-in; the browser copy is preserved. CSV export is not a CSV import or restore feature.
+- Stripe test-mode checkout and subscription management use a fixed $4.99 USD/month plan. Every financial API request requires a verified Clerk session. Subscription mode also requires a currently paid subscription; explicit private-test mode instead restricts access to approved Clerk user IDs and an isolated test D1 binding, without Stripe. Live payment keys are deliberately rejected. Account-connected testing and launch approval are still required; keep public access disabled.
 
-No environment variables, external database, API keys, or external fonts are required.
+Clerk runtime configuration and the D1 schema are required. See [AUTHENTICATION.md](./AUTHENTICATION.md) for configuration, security boundaries, migration status, and remaining live tests. See [BILLING.md](./BILLING.md) for test-mode billing and [RELEASE_READINESS.md](./RELEASE_READINESS.md) for remaining account-side work. No external fonts are required.
+
+Money Saver saves a goal, amount already set aside and a profit percentage to the account. Suggestions use the selected period’s positive net profit, are capped at the remaining goal, and never change transaction totals or move money. See [PRIVATE_TESTING.md](./PRIVATE_TESTING.md) for Stripe-free testing setup.
 
 ## Cloudflare Workers
 

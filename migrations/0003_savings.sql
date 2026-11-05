@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS savings_plans (
+  user_id TEXT PRIMARY KEY NOT NULL,
+  goal INTEGER NOT NULL CHECK(goal > 0),
+  saved INTEGER NOT NULL CHECK(saved >= 0),
+  percent INTEGER NOT NULL CHECK(percent BETWEEN 0 AND 100)
+);

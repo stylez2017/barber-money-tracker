@@ -7,26 +7,38 @@
     "build": "next build --webpack",
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types tests/finance.test.ts",
+    "test": "node --experimental-strip-types --test tests/*.test.ts && npm run test:ui",
     "build:cloudflare": "opennextjs-cloudflare build",
     "preview:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare preview",
     "deploy:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare deploy",
     "check:cloudflare": "wrangler deploy --dry-run --outdir .open-next/dry-run",
-    "test:tooling": "node tests/build-tooling.test.mjs"
+    "test:tooling": "node tests/build-tooling.test.mjs",
+    "test:worker": "node scripts/test-worker.mjs",
+    "test:core": "node --experimental-strip-types --test tests/finance.test.ts tests/finance-boundaries.test.ts tests/csv.test.ts tests/transactions.test.ts tests/storage-core.test.ts",
+    "test:timezones": "node scripts/test-timezones.mjs",
+    "test:ui": "tsx --test tests/*ui.test.tsx",
+    "test:worker:private": "node scripts/test-worker.mjs --private"
   },
   "dependencies": {
+    "@clerk/backend": "^3.26.5",
+    "@clerk/react": "^6.18.4",
     "lucide-react": "^0.468.0",
     "next": "^16.4.3",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "stripe": "^23.1.0"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.20.15",
     "@tailwindcss/postcss": "^4.1.0",
+    "@testing-library/react": "^16.3.3",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "jsdom": "^30.1.3",
     "tailwindcss": "^4.1.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.0",
     "wrangler": "^4.156.0"
   },

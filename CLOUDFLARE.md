@@ -1,12 +1,16 @@
 # Deploying Barber Money Tracker to Cloudflare Workers
 
+> Customer-account update: follow [AUTHENTICATION.md](./AUTHENTICATION.md) before building.
+> Clerk runtime variables/secrets and D1 bindings are required. Keep
+> production and preview access disabled until billing and live testing finish.
+
 This repository uses `@opennextjs/cloudflare`, not Cloudflare Pages or the legacy `next-on-pages` adapter. No deployment was performed when adding this configuration.
 
 ## Requirements
 
 - Node.js 24 (pinned in `.node-version`), npm, and a Cloudflare account with Workers access. The installed Wrangler requires Node.js 22 or newer.
 - Run all commands in the `barber-money-tracker` checkout.
-- No application secrets, database, R2 bucket, Stripe account, or authentication provider are required. Earnings remain in browser localStorage.
+- Configure Clerk authentication and D1 storage using AUTHENTICATION.md. Supply the Clerk publishable key and secret key as runtime configuration. No R2 bucket is required. Stripe test-mode runtime configuration is also required; see BILLING.md.
 - Wrangler's Worker name is `barber-money-tracker`. The `WORKER_SELF_REFERENCE` service name must match it if renamed.
 
 ## Install and validate
@@ -35,7 +39,7 @@ This rebuilds and starts the OpenNext Wrangler preview. Open the address Wrangle
 2. Set the root directory to the repository root (leave blank or use `/`), Node.js version to `24` (`NODE_VERSION=24` if the UI requires a build variable), and dependency installation to `npm ci` if configurable. Development dependencies are needed during builds; do not omit them.
 3. Set **Build command** to `npm run build:cloudflare` and **Deploy command** to `npx opennextjs-cloudflare deploy`. The deploy command uses the output already built; do not configure a Pages output directory.
 4. If a separate non-production/preview deployment command is offered, use `npx opennextjs-cloudflare upload`. Enable automatic Git builds only when you are ready for pushes to deploy.
-5. Review and start the first deployment when ready. Cloudflare supplies build/deployment authorization for its connected Worker. No application runtime variables are needed.
+5. Review and start the first deployment when ready. Cloudflare supplies build/deployment authorization for its connected Worker. Set Clerk runtime configuration for the intended environment.
 
 GitHub integration must be authorized for this repository. If it is unavailable or the repository cannot be selected, use the manual workflow below; it does not require Cloudflare's GitHub integration.
 
@@ -68,11 +72,11 @@ GitHub clone access and Cloudflare deployment access are separate permissions. A
 
 ## After deployment
 
-Visit the URL printed by the deploy command, add income/tips and expenses, verify totals, refresh to verify persistence, then edit/delete a test transaction. Use the Workers dashboard to attach a custom domain if desired. `workers_dev: true` enables the standard workers.dev URL.
+Visit the URL printed by the deploy command, add income/tips and expenses, verify totals, refresh to verify persistence, then edit/delete a test transaction. Use the Workers dashboard to attach a custom domain if desired. `workers_dev: false` and `preview_urls: false` keep standard production and preview URLs disabled in repository configuration. Custom domains, routes, and dashboard access settings must be checked separately before launch.
 
-**Storage is tied to the browser and origin.** Existing records on localhost, a preview URL, or a different domain do not appear on a new deployment domain. Deployment does not erase the old origin's records. Export CSV before switching origins; the app currently has no CSV import feature. Clearing browser data removes local records.
+**Legacy storage is tied to the browser and origin.** Old browser records remain at their original origin until explicitly imported into a signed-in account. Deployment does not erase them. Export CSV before switching origins; there is no CSV import feature. New cloud records are tied to the customer account and available after sign-in across devices.
 
-No persistent server cache is configured because the app has no ISR, server-side data, or Next.js image optimization requirements. If those features are added later, revisit OpenNext's caching and image binding documentation before deploying them.
+No persistent server cache is configured because the app has no ISR or Next.js image optimization requirements; authenticated transaction queries use server routes and D1. If those features are added later, revisit OpenNext's caching and image binding documentation before deploying them.
 
 Official references:
 - https://opennext.js.org/cloudflare/get-started
