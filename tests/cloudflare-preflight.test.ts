@@ -17,6 +17,11 @@ test('Cloudflare preflight uses GET metadata only and never includes credentials
  assert.equal(requests.length,2);assert.deepEqual(report.missing,[]);
  assert.ok(!JSON.stringify(report).includes('private-token-value'));
  assert.ok(!requests.some(path=>path.includes('/query')));
+ // Cloudflare's legacy binding metadata uses id; Wrangler config uses database_id.
+ const legacy=worker();
+ const legacyReport=await preflight({token:'private-token-value',account:EXPECTED_ACCOUNT},async(url)=>Response.json({success:true,result:String(url).includes('/d1/')?{uuid:database,name:'barber-money-tracker-test-db'}:{...legacy,previews_base_config:{env:{...legacy.previews_base_config.env,DB:{type:'d1',id:database},PRIVATE_TEST_DB:{type:'d1',id:database}}}}}));
+ assert.deepEqual(legacyReport.missing,[]);
+
 });
 test('Cloudflare preflight reports missing setup and redacts service error payloads',async()=>{
  const report=await preflight({token:'token',account:EXPECTED_ACCOUNT},async()=>Response.json({success:false,error:'sensitive-value'},{status:403}));

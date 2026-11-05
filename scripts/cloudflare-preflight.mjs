@@ -35,8 +35,8 @@ export async function preflight({ token, account }, fetcher = fetch) {
     if (ids.length && ids.every(id=>/^user_[A-Za-z0-9]+$/.test(id))) checks.push('Preview Clerk user allowlist is configured.');
     else missing.push('Previews Base: configure exact approved Clerk user IDs.');
     for (const name of ['DB','PRIVATE_TEST_DB']) {
-      if (env[name]?.type === 'd1' && env[name].database_id === TEST_DB) checks.push(`Preview ${name} uses the test D1 database.`);
-      else missing.push(`Previews Base: bind ${name} to barber-money-tracker-test-db.`);
+      if (env[name]?.type === 'd1' && (env[name].database_id ?? env[name].id) === TEST_DB) checks.push(`Preview ${name} uses the test D1 database.`);
+      else missing.push(`Previews Base: verify ${name} is bound to barber-money-tracker-test-db; its association could not be confirmed.`);
     }
     if (text('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY')?.startsWith('pk_test_') && env.CLERK_SECRET_KEY?.type === 'secret_text') checks.push('Clerk development key bindings are present (values not logged).');
     else missing.push('Previews Base: verify Clerk development public key and secret bindings.');
